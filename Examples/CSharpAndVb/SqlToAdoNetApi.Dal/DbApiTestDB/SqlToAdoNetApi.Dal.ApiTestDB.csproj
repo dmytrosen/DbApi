@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{7CB98EC9-2538-4292-A7A8-8F4A499411DB}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SqlToAdoNetApi.Dal.TestDB</RootNamespace>
+    <AssemblyName>SqlToAdoNetApi.Dal.TestDB</AssemblyName>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>
+    </StartupObject>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.Linq" />
+    <Reference Include="System.Data.SqlXml" />
+    <Reference Include="System.Reflection.Context" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Serialization" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Generated\CSharpCode\ApiTestDBGenerated.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Configuration\DbApiDataSource.xml" />
+    <Content Include="Database\dbo\StoredProcedures\dbo.sp_ProcClassResult.sql" />
+    <Content Include="Database\dbo\StoredProcedures\dbo.sp_ProcExistingCollectionResult.sql" />
+    <Content Include="Database\dbo\StoredProcedures\dbo.sp_ProcCollectionResult.sql" />
+    <Content Include="Database\dbo\StoredProcedures\dbo.sp_ProcExistingClassResult.sql" />
+    <Content Include="Database\dbo\StoredProcedures\dbo.sp_ProcDataSet.sql" />
+    <Content Include="Database\dbo\StoredProcedures\dbo.sp_ProcScalar.sql" />
+    <Content Include="Database\dbo\StoredProcedures\dbo.sp_ProcNoResult.sql" />
+    <Content Include="Database\dbo\StoredProcedures\dbo.sp_ProcTestNoApiMetaData.sql" />
+    <Content Include="Database\dbo\Tables\ApiTestEighthTest.sql" />
+    <Content Include="Database\dbo\Tables\dbo.ApiTestAllTypesTest.sql" />
+    <Content Include="Database\dbo\Tables\dbo.ApiTestFifthTest.sql" />
+    <Content Include="Database\dbo\Tables\dbo.ApiTestFirstTest.sql" />
+    <Content Include="Database\dbo\Tables\dbo.ApiTestFourthTest.sql" />
+    <Content Include="Database\dbo\Tables\dbo.ApiTestMainTest.sql" />
+    <Content Include="Database\dbo\Tables\dbo.ApiTestThirdTest.sql" />
+    <Content Include="Database\dbo\Tables\dbo.ApiTestUser.sql" />
+    <Content Include="Database\sen\Tables\sen.ApiTestSecondTest.sql" />
+    <Content Include="Database\sen\Tables\sen.ApiTestSeventhTest.sql" />
+    <Content Include="Database\dbo\UserFunctions\dbo.IntBitValuePairArrayType.sql" />
+    <Content Include="Exec\SqlToAdoNetApi.Runner.exe" />
+    <Content Include="Generated\CSharpCode\DoNotDelete.txt" />
+    <Content Include="Generated\Xml\DoNotDelete.txt" />
+    <None Include="Exec\SqlToAdoNetApi.Runner.exe.config" />
+    <None Include="Generated\Xml\DataSourceConfig.xml">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent></PreBuildEvent>
+  </PropertyGroup>
+  <Target Name="BeforeBuild">  
+    <Exec Command="copy $(ProjectDir)Generated\CSharpCode\DoNotDelete.txt $(ProjectDir)\Generated\CSharpCode\ApiTestDBGenerated.cs /y"/>
+    <Exec Command="$(ProjectDir)Exec\SqlToAdoNetApi.Runner.exe" ContinueOnError="False">
+      <Output TaskParameter="ExitCode" PropertyName="ErrorCode"/>
+    </Exec>
+    <Message Importance="high" Text="$(ErrorCode)"/>
+  </Target>
+</Project>

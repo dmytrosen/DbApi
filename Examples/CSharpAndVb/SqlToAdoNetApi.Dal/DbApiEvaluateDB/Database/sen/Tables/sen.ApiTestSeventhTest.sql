@@ -1,0 +1,27 @@
+USE [ApiEvaluateDB]
+GO
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+
+/* HISTORY   
+	12/09/2016 - dsen 
+*/ 	
+/* DESCRIPTION  
+	...
+*/
+IF EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'sen' AND TABLE_NAME = 'ApiTestSeventhTest')
+BEGIN
+	DROP table sen.ApiTestSeventhTest
+end
+go
+
+CREATE table sen.ApiTestSeventhTest
+(
+	SeventhTestID INT NOT NULL,Name VARCHAR(64) NOT NULL,CreatedDate DATETIME NOT NULL DEFAULT(GETDATE())
+) 
+GO

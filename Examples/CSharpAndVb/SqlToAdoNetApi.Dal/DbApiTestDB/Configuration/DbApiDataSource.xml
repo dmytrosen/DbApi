@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DataSource language="CSharp">
+  <Databases>
+    <Database key="ApiTestDB" name="API Test DB">
+      <ConnectionString connectionString="DbApi.ApiTestDBConnectionString" providerName="System.Data.SqlClient" />
+      <Namespace>SqlToAdoNetApi.Dal.ApiTestDB</Namespace>
+      <CSharpOutput generate="true" path="../Generated/CSharpCode" />
+      <TableLocations>
+        <TableLocation path="../Database/sen/Tables" />
+        <TableLocation path="../Database/dbo/Tables" />
+      </TableLocations>
+      <StoredProcLocations>
+        <StorProcLocation path="../Database/dbo/StoredProcedures" />
+      </StoredProcLocations>
+      <TableDefinitions />
+      <StorProcDefinitions />
+    </Database>
+  </Databases>
+  <Defaults>
+    <KeepRelativePath>false</KeepRelativePath>
+    <NormalizeParameterName>true</NormalizeParameterName>
+    <NormalizePropertyName>true</NormalizePropertyName>
+    <CleanupKeywords>
+      <CleanupKeyword caseSensitive="false">Identity\(\s*[0-9]+,\s*[0-9]+\s*\)</CleanupKeyword>
+    </CleanupKeywords>
+  </Defaults>
+  <XmlOutput generate="true" path="../Generated/Xml" />
+  <LogErrors>
+    <LogType output="VsOutput" />
+    <LogType output="File" path="../../../Logs" nameTemplate="Log" />
+    <LogType output="PopupWindow" disable="false" />
+  </LogErrors>
+</DataSource>

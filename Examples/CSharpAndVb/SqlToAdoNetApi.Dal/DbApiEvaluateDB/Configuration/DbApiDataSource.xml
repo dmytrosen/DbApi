@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DataSource language="VB">
+  <Databases>
+    <Database key="ApiEvaluatetDB" name="API Test DB">
+      <ConnectionString connectionString="DbApi.ApiEvaluatetDBConnectionString" providerName="System.Data.SqlClient" />
+      <Namespace>SqlToAdoNetApi.Dal.ApiEvaluatetDB</Namespace>
+      <CSharpOutput generate="true" path="../Generated/VBCode" />
+      <TableLocations>
+        <TableLocation path="../Database/dbo/Tables" />
+        <TableLocation path="../Database/sen/Tables" />
+      </TableLocations>
+      <StoredProcLocations>
+        <StorProcLocation path="../Database/dbo/StoredProcedures" />
+      </StoredProcLocations>
+      <TableDefinitions />
+      <StorProcDefinitions />
+    </Database>
+  </Databases>
+  <Defaults>
+    <KeepRelativePath>false</KeepRelativePath>
+    <NormalizeParameterName>true</NormalizeParameterName>
+    <NormalizePropertyName>true</NormalizePropertyName>
+    <CleanupKeywords>
+      <CleanupKeyword caseSensitive="false">Identity\(\s*[0-9]+,\s*[0-9]+\s*\)</CleanupKeyword>
+    </CleanupKeywords>
+  </Defaults>
+  <XmlOutput generate="true" path="../Generated/Xml" />
+</DataSource>
