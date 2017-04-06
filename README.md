@@ -3,57 +3,52 @@
 Introduction
 ============
 
-One time ADO.NET was very popular among .NET developers. It still is. Quite a
-number of .NET folks still push and pull data to and from database using the
-same old reliable ADO.NET, which, by the way, Microsoft continues to improve.
-Not all (and far from it) developers have embraced ORM frameworks. There are
-good reasons for that. However, discussion of those reasons is out of scope of
-this document.
+One time ADO.NET was very popular among .NET developers, and it still is. 
+Not all developers have embraced ORM frameworks. Quite a number of .NET folks 
+still push and pull data to and from database using the same old reliable 
+ADO.NET. 
 
-This document is about a way to make life of .NET developer easy by automating
-ADO.NET part of development.
+This project is about a way to make life better for .NET developer; the way 
+to automate coding ADO.NET part of code.
 
 Background
 ----------
 
-It is common when developer writes stored procedure code as well as a component,
-which is intended to use the stored procedure. Then he or she creates a
-respective method in corresponding data access layer project to connect both:
-.NET component and beck-end stored procedure. Most common way to create this
-method among developers is copy/paste/adjust similar code. It works well,
-because this kind of ADO.NET coding is pretty much straightforward, well known
-and well templated. It is so routing that it begs to be automated.
+It is common for developer to create program component as well as stored procedure 
+to act as component proxy on backend. It is also common for developer to create 
+program method to call the stored procedure from the program component. Some of 
+developers prefer old reliable ADO.NET to do that.
 
-Not surprisingly, some companies have created one variation or another of an
-ADO.NET code generator. Quite often such code generator takes form of internal
-tool or API, which generates a data access layer DLL before MSBuild starts
-building solution. Once DAL method is generated, it is discoverable through .NET
-reflection. Hence, .NET project containing this method can be bound at design
-time, if build sequence is guaranteed of course.
+I reveal no secret when I say that many of such data access methods are alike in a 
+way they define SqlCommand, open SqlConnection, call one of ADO.NET Execute 
+methods, etc. It is repetitive and routine coding of well defined and well 
+templated code. It is so repetitive that many developers prefer copy/paste/adjust 
+similar code to save time. Of course, the other side of the copy/paste/adjust coin 
+is notorious for dummy "copy/paste" errors.
 
-This approach is not quite native to MSBuild. Committing early binding to such
-DAL project may be difficult at times. Another major problem is limited ability
-of such tool to identify source of failure, because corresponding code or XML
-which feeds generator is not part of the built solution.
+Repetitive and well templated code is good candidate for automation.
 
-Ideal workflow would be like this. Developer creates or modifies a stored
-procedure and saves the changes. Then he or she initiates build of a DAL
-project. This action kicks off a process, which reads the stored procedure,
-generates respective method and puts relevant ADO.NET content in it. Once it’s
-done, the DAL project or DLL (depends on what generator delivers) is ready for
-use by other .NET projects.
+This kind of automation implies hacking into project build process to generate 
+project content before project build. It creates some challenges, because this 
+sequence of actions is not quite MSBuild friendly. Other challenges, like 
+committing to early binding of such project, or ability to identify source of 
+failure, may be difficult to overcome. 
 
-Let’s take a look on “SQL to ADO.NET API” (later on – DB API), which does it
-all.
+DB API solves most of those problems. It parses SQL script, generates source code 
+of data access method, and stores the code in .cs or .vb file, while the file is 
+set to compile when project is compiled. DB API also guarantees proper sequence 
+of build actions, as well as it provides accurate error messaging when it runs. 
 
 Fundamentals
 ============
 
 ### Metadata 
 
-Once upon a time someone got an idea to describe input and output of stored
-procedure in XML and put this XML in the same stored procedure. This XML is
-universally called metadata. Example of metadata when using DB API:
+Once upon a time someone got an idea to describe stored procedure input and 
+output in XML format and put this XML in the same stored procedure. This XML is 
+universally called metadata. Here is an example of metadata, which DB API 
+understands: 
+
 ```
 /*
 <DbApiMetadata method="GetListOfUsers">
@@ -79,52 +74,46 @@ as
 BEGIN
 …
 ```
-Having all in one SQL file solves SQL script-metadata mapping problem, reduces
-number of files and improves understanding of code. On other hand, adopting XML
-as method descriptor’s metalanguage streamlines conversion of metadata to .NET
-runtime object of well known type. Simple deserialization does the job.
-Deserialized metadata object has everything it needs to generate matching
-ADO.NET method.
 
-### Configuration 
+As you can see in example above, SQL code and metadata both are combined into 
+one SQL file. It makes the script DB API-ready. 
 
-DAL project is configured to run an executable. In DB API case, the executable
-is the code generator. Let’s call it Runner.
+Let’s assume that an application we call Runner finds DB API-ready SQL script, 
+parses it and generates data access method code. 
 
-MSBuild invokes Runner before it starts build DAL project. Runner loads and
-parses SQL scripts and metadata, and generates corresponding data access
-methods.
+Then we hook up Runner to .NET Class Library project, which we configure to 
+execute Runner before its build. 
 
-DB API expects DAL project to be of .NET Class Library, C\# or VB.NET language.
-This project serves as a code placeholder, where Runner puts generated C\# or
-VB.NET generated code.
+The rest is straightforward. MSBuild kicks-off project build, which kicks-off 
+Runner, which generates code into .cs or .vb files of the project. Once Runner 
+completes generating code, MSBuild starts building the project with just 
+acquired data access methods.
 
 Definitions
 ===========
 
-1.  Runner – SqlToAdoNetApi.Runner – an application, which reads SQL scripts of
-    SQL tables and stored procedures, and generates source code of DA Methods
-    either using C\# or VB.NET programming languages. It is, by all means,
-    SQL-to-C\#/VB.NET code generator.
+1.  DA Method – data access method is generated from metadata. Generated code 
+    calls specific stored procedure. Only 1 DA Method is generated for each 
+    stored procedure metadata. 
 
-2.  DA Method – generated data access method contains ADO.NET code, which talks
-    to associated stored procedure.
+2.  Runner – SqlToAdoNetApi.Runner – application reads SQL tables and stored 
+    procedures scripts, and then generates source code of DA Methods. 
 
-3.  DA Class – generated .NET POCO class. DA Method returns it when stored
-    procedure returns single row of single recordset. ClassResult or
-    CollectionResult return type must be specified as return type in metadata.
+3.  DA Class – .NET POCO class is generated from metadata. DA Method returns 
+    DA Class when stored procedure returns single or multiple rows of single 
+    recordset. 
 
-4.  DAL Project - data access layer compiled project. The project, which is
-    configured to host generated .NET source code files. DAL Project is .NET
-    class library.
+4.  DAL Project – .NET Class Library project is configured to host generated 
+   .NET source code files. 
 
-5.  DAL DLL – DLL as result of DAL Project compilation.
+5.  DAL DLL – DLL compiled from DAL Project after Runner completed to generate 
+    content of DAL project. 
 
-6.  API Configuration File – XML file, which describes databases and other
+6.  API Configuration File – XML file, which describes databases and other 
     resources, as well as defines SqlToAdoNetApi.Runner execution behavior.
-
-7.  Generated XML file – XML file represents assembly of all complex objects,
-    which define generated SQL tables, DA Methods and DA Classes.
+ 
+7.  Generated XML file – XML file represents assembly of all complex objects, 
+    which define process of generating DA Methods and DA Classes.
 
 8.  Generated Code File – C\# or VB.NET source code file, which contains all
     generated DA Methods and DA Classes of a Database in DAL Project. There is
@@ -133,61 +122,51 @@ Definitions
 DAL Project Structure
 =====================
 
-Graphical example of DAL Project of test database configured for this DB API.
+Here is an example of DAL Project and test database configured for use of DB API 
 
 ![DAL Project](/Images/graph1.png)
 
-DAL Project has 4 sections:
+As you can see, DAL Project has 4 sections:
 
-1.  Configuration File – API configuration file like DbApiDataSource.xml in the
-    example above. The file can be located anywhere; however, it is recommended
-    to keep it in structure of the project. When SqlToAdoNetApi.Runner.exe is
-    invoked, DbApi.DatabaseSettingsPath key in SqlToAdoNetApi.Runner.exe.config
-    file tells executable where the Configuration File is located.
+1.  Configuration File – API configuration file like DbApiDataSource.xml in the 
+    example above. The file can be located anywhere; however, it is recommended 
+    to keep it in structure of the project. When SqlToAdoNetApi.Runner.exe is 
+    invoked, DbApi.DatabaseSettingsPath key in SqlToAdoNetApi.Runner.exe.config 
+    file tells executable where to find Configuration File.
 
-2.  Database scripts – all database scripts: tables and stored procedures. The
-    scripts are parsed during SQL-to-C\#/VB.NET code generation process. Actual
-    SQL script files can be located anywhere with exception of shared folder
-    (presently). DB folders are shown as part of the DAL Project for convenience
-    only.
+2.  Database scripts – collection of directories where Runner looks for tables 
+    and stored procedures SQL scripts. Actual SQL script files can be located 
+    anywhere with exception of shared folder (presently). DB folders are shown 
+    as part of the DAL Project for convenience only. 
 
-3.  Exec section – the project directory, where SqlToAdoNetApi.Runner.exe
-    executable is located.
+3.  Exec section – the project directory, where SqlToAdoNetApi.Runner.exe 
+    executable file is located. 
 
-4.  Generated – the project directory, where SqlToAdoNetApi.Runner.exe places
-    Generated XML File and Generated Code File(s) to. Locations are
-    configurable.
+4.  Generated – the project directory and files, where SqlToAdoNetApi.Runner.exe 
+    writes content of Generated XML File and Generated Code File(s) into. 
+    Locations are configurable. 
 
 Let’s put all known to this point together
 ==========================================
 
-As you see on the Graph 1 of SqlToAdoNetApi.Dal.ApiTestDB DAL Project example,
-there is almost nothing there. That is because Runner generates all code and
-puts it into Generated section directories. C\#/VB.NET code goes into
-ApiTestDbGenerated.cs file, which is set with Build Action “Compile” in DAL
-Project. Therefore, when the SqlToAdoNetApi.Dal.ApiTestDB DAL Project is
-compiled, all generated code is compiled in it.
+As you can see on example of SqlToAdoNetApi.Dal.ApiTestDB DAL Project above, 
+there is no content there yet. Runner generates content of the project just 
+before the project starts compiling. 
 
-Developer has to tell the Runner which stored procedure to compile and how. When
-Runner starts, it looks into SqlToAdoNetApi.Runner.exe.config file, where the
-key
+Runner looks into SqlToAdoNetApi.Runner.exe.config file, where the key 
+```
+\<add key="DbApi.DatabaseSettingsPath" value="..\\Configuration\\DbApiDataSource.xml" /\>
+```
+tells it where to find API Configuration File. Then the API Configuration 
+File tells Runner where to find DB API-ready scripts.
 
-\<add key="DbApi.DatabaseSettingsPath"
-value="..\\Configuration\\DbApiDataSource.xml" /\>
+Then Runner parses DB API-ready scripts and composes Object Graph. Then 
+Runner uses Object Graph to generate DA Methods and DA Classes and write 
+result into respective .cs or .vb files.
 
-tells it where to find API Configuration File of DAL Project. Then the API
-Configuration File tells Runner where to find scripts of SQL tables and stored
-procedures.
+Now let’s make sure that Runner executes before DAL Project starts 
+compilation. Let’s create Target section in .csproj or .vbproj file: 
 
-Then Runner loads, reads and parses all table and stored procedure files
-composing Object Graph, which is used later to generate DA Methods and DA
-Classes from SQL Metadata of all SQL files.
-
-Once it’s done, DAL Project is ready for compilation.
-
-Now let’s make sure that Runner executes before DAL Project starts compilation.
-In order to do that, DAL Project file must have Target section as it is shown
-below:
 ```
 <Target Name="BeforeBuild">
 	<Exec Command="copy \$(ProjectDir)Generated\\CSharpCode\\DoNotDelete.txt $(ProjectDir)\\Generated\\CSharpCode\\ApiTestDBGenerated.cs /y"/>
@@ -197,8 +176,7 @@ below:
 	<Message Importance="high" Text="\$(ErrorCode)"/>
 </Target>
 ```
-In this example, MSBuild clears ApiTestDbGenerated.cs and then Runner generates
-new content into it.
+In example above, MSBuild clears ApiTestDbGenerated.cs and then Runner generates new content into it. 
 
 Configuration
 =============
@@ -206,16 +184,16 @@ Configuration
 API Configuration File
 ----------------------
 
-API Configuration File is of XML format and defines all settings of DAL Project.
+XML formatted API Configuration File defines all settings of DAL Project. 
 
 ### \<DataSource ..\>
 
-Root element of configuration object, which defines settings of the DAL Project.
+Root element of API Configuration File.
 
 #### Attributes
 
 **language** – string – required – defines programming language for code
-generation. “CSharp” and “VB” are the only options.
+generation. “CSharp” and “VB” are the options.
 
 #### Child elements
 
@@ -225,8 +203,8 @@ databases.
 **\<Defaults**\> – complex object – required – defines set of default variables
 used by Runner.
 
-**\<XmlOutput** ..\> – complex object – tells Runner to generate Object Graph in
-form of XML, as well as defines location of this file.
+**\<XmlOutput** ..\> – complex object – tells Runner to generate serialize 
+Object Graph into XML file, as well as defines location of this file.
 
 **\<LogErrors**\> – collection of complex objects – collection of error loggers.
 Each logger has its own output.
@@ -251,16 +229,16 @@ Each logger has its own output.
 
 ### \<Database ..\>
 
-Database defines collection of paths, as well as other parameters. Each path
+Database defines collection of paths as well as other parameters. Each path
 represent directory, where Runner looks for tables or stored procedures, which
-participate in generation of Generated Code Files.
+participate in creation of Generated Code Files.
 
 #### Attributes
 
-**key** – string – required – Name of DB. Spaces are not allowed. Must be unique
-in Database Collection.
+**key** – string – required – Name of DB. Spaces are not allowed. Name must be 
+unique in Database Collection.
 
-**name** – string – required – Name of DB used as DB description.
+**name** – string – required – DB description.
 
 #### Child elements
 
@@ -612,14 +590,14 @@ the column automatically.
 Troubleshooting
 ===============
 
-World of S/W development is not perfect and avoiding mistakes is a difficult
-task. DB API understands it and tries to help developer to troubleshoot metadata
-along with tuning configuration files.
+World of S/W development is not perfect and avoiding mistakes is a difficult task. 
+DB API understands it and helps troubleshooting metadata along with tuning 
+configuration files. 
 
 #### Tip 1
 
-Configure LogType output VsOutput or/and File for automatic build, and all 3 for
-debugging.
+Configure LogType output VsOutput or/and File for automatic build, and all 3 
+loggers when debugging.
 ```
 <LogErrors>
 	<LogType output="VsOutput" />
@@ -628,26 +606,26 @@ debugging.
 </LogErrors>
 ```
 
-If error has made to build, log into File option likely is the most useful.
+If error has made to build, File option likely is the most useful.
 
 ![File log](/Images/log.png)
 
-If developer actively changes code, Popup Window probably is the best way to
-detect and understand the error.
+If developer is actively working with code, Popup Window probably is the best 
+way to detect and understand the error.
 
 ![Popup Window log](/Images/logr.png)
 
 #### Tip 2
 
-Turn on XML output while developing. You always can analyze the XML to find out
-why e.g. property is not generated. Turn off XML output for automated production
-build.
+Turn on XML output while developing. You always can analyze the XML file to find 
+out why e.g. property is not generated. Turn off XML output for automated 
+production build.
 
 #### Tip 3
 
-If in some reason it is not possible to configure to invoke Runner in \<Target
-Name="BeforeBuild"\> in DAL Project, alternative would be to make use of 
-pre-build events of the project.
+If in some reason it is not possible to configure Runner in \<Target
+Name="BeforeBuild"\>, alternative would be to make use of pre-build events of 
+the project.
 
 Example of SQL to ADO.NET API
 =============================
@@ -665,17 +643,18 @@ Unit test project requires test databases:
 
 -   **ApiTestDB**
 
-The databases can be restored from backups of the test databases created using
-SQL Server 2014:
+You can restore test databases from backups: 
 
 -   **\$\\DbApi\\DB\\ApiEvaluateDB.bak**
 
 -   **\$\\DbApi\\DB\\ApiTestDB.bak**
 
+The backups were created in SQL Server 2014. 
+
 ![DB backup](/Images/graph3.png)
 
-If the backups are not restored successfully for some reason, either create the
-databases manually or run script:
+If you don’t want or cannot restore backups for any reason, either create the 
+databases manually, or run script:
 
 -   **\$\\DbApi\\DB\\CreateDBs.sql** (change “C:\\...\\” path to actual location
     of the test databases in the script)
