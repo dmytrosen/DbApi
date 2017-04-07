@@ -488,8 +488,7 @@ called.
 
 ### \<ResultParam ..\>
 
-Property of return type POCO class, when return type is specified as ClassResult
-and CollectionResult.
+POCO class property, when return type is specified as ClassResult and CollectionResult.
 
 | Attribute       | Type   | Presence    | Description                                                                                                                                                                                                                                           |
 |-----------------|--------|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -502,7 +501,7 @@ and CollectionResult.
 ## Why Runner parses SQL tables?
 
 It is all well and good when stored procedure is brand new and shiny, and all
-input and output parameters match types of relative columns of tables, which
+input and output parameters match types of relative table columns, which
 they suppose to match. A day comes, when another developer changes type of one
 of the column. Now type of respective input (or output) parameter does not match
 the table column type. This problem is difficult to identify, and sometimes code
@@ -514,43 +513,50 @@ Let’s assume type of **UserRank** parameter matches type of
 **dbo.User.UserRank** column, which is INT at the moment. So, we confidently
 define type of the parameter as INT.
 
-\<ResultParam name="UserRank" type="int" nullable="true" /\>
+```
+<ResultParam name="UserRank" type="int" nullable="true" />
+```
 
 Let’s also assume **dbo.User.UserID** column type is INT. However, this time we
 tell parameter **UserId** to use type of **dbo.User.UserID** column, whatever it
 is at the moment, instead of hardcoding it to INT.
 
-\<ResultParam name="UserId" typeDef="dbo.User.UserID" nullable="true" /\>
+```
+<ResultParam name="UserId" typeDef="dbo.User.UserID" nullable="true" />
+```
 
 Lets assume DB API generates method:
 
-public ICollection\<AppUser\> GetUsers(…, int? userId, int? userRank, …) { … }
+```
+public ICollection<AppUser> GetUsers(…, int? userId, int? userRank, …) { … }
+```
 
 Now, let's alter type of **dbo.User.UserRank** and **dbo.User.UserID** columns to
 BIGINT. DB API continues to generate input parameter **userRank** type as
 **int?**, which is wrong; however, type of parameter **userId** now is **long?**, 
 which is correct.
 
-public ICollection\<AppUser\> GetUsers(…, long? userId, int? userRank, …) { … }
+```
+public ICollection<AppUser> GetUsers(…, long? userId, int? userRank, …) { … }
+```
 
 #### Conclusion
 
-Adopting usage of **typeDef** instead of **type** brings certain advantage. Type
-of parameter of DA Method matches type of mapped table column. When the column
-type changes, DB API adjusts the DA Method parameter type to match new type of
+Adopting usage of **typeDef** instead of **type** attribute brings certain advantage. 
+Type of parameter of DA Method always matches type of mapped table column. When the 
+column type changes, DB API adjusts the DA Method parameter type to match new type of
 the column automatically.
 
 Troubleshooting
 ===============
 
-World of S/W development is not perfect and avoiding mistakes is a difficult task. 
-DB API understands it and helps troubleshooting metadata along with tuning 
-configuration files. 
+World of S/W development is not perfect and it is difficult to avoid mistakes. 
+DB API helps troubleshooting metadata along with tuning configuration files.
 
 #### Tip 1
 
-Configure LogType output VsOutput or/and File for automatic build, and all 3 
-loggers when debugging.
+Configure LogType output VsOutput or/and File for automatic build. 
+Configure all 3 loggers when debugging in Visual Studio. 
 ```
 <LogErrors>
 	<LogType output="VsOutput" />
@@ -559,26 +565,25 @@ loggers when debugging.
 </LogErrors>
 ```
 
-If error has made to build, File option likely is the most useful.
+When error has made to build, File logger likely is the most useful. 
 
 ![File log](/Images/log.png)
 
-If developer is actively working with code, Popup Window probably is the best 
-way to detect and understand the error.
+Popup Window probably is the best way to detect and understand error, when 
+developer is actively working with metadata.
 
 ![Popup Window log](/Images/logr.png)
 
 #### Tip 2
 
-Turn on XML output while developing. You always can analyze the XML file to find 
-out why e.g. property is not generated. Turn off XML output for automated 
-production build.
+Turn on XML output while developing. You always can analyze Object Graph in 
+generated XML file to find out what is missing. Turn off XML output when you 
+ready to run automated production build.
 
 #### Tip 3
 
-If in some reason it is not possible to configure Runner in \<Target
-Name="BeforeBuild"\>, alternative would be to make use of pre-build events of 
-the project.
+If it is not possible to configure \<Target Name="BeforeBuild"\> to execute 
+Runner in some reason, you always can fall back on project pre-build events.
 
 Example of SQL to ADO.NET API
 =============================
@@ -587,8 +592,7 @@ Get source code.
 
 ![Source code](/Images/graph2.png)
 
-Prepare test databases
-----------------------
+##### Prepare test databases
 
 Unit test project requires test databases:
 
@@ -606,13 +610,12 @@ The backups were created in SQL Server 2014.
 
 ![DB backup](/Images/graph3.png)
 
-If you don’t want or cannot restore backups for any reason, either create the 
-databases manually, or run script:
+Alternative to restoring databases from backups is to create them manually, or run script:
 
--   **\$\\DbApi\\DB\\CreateDBs.sql** (change “C:\\...\\” path to actual location
-    of the test databases in the script)
+-   **\$\\DbApi\\DB\\CreateDBs.sql** (in the script, change “C:\\...\\” path to actual location
+    of the test databases)
 
-Then run script:
+Then run script to create all required objects in the test databases: 
 
 -   **\$\\DbApi\\DB\\DDLs.sql**
 
@@ -621,7 +624,9 @@ to create all required SQL objects required for unit testing.
 Test solution
 -------------
 
-Open **SqlToAdoNetApi** solution in Visual Studio 2015+.
+Open **SqlToAdoNetApi.CSharpAndVb.sln** solution in Visual Studio 2015+. 
+You also need to install .NET Framework 4.6.2 if, it is not yet installed. 
+
 
 Open **App.config** file and configure connection strings to point to your test
 databases:
@@ -630,7 +635,10 @@ databases:
 <add key="DbApi.ApiEvaluatetDBConnectionString" value="Data Source=YOUR-DB-INSTANCE;Initial Catalog=ApiEvaluateDB;Integrated Security=True" />
 ```
 
-Build the solution.
+Build the solution. Observe **ApiTestDBGenerated.cs** and **ApiEvaluatetDBGenerated.vb** 
+files have been generated as well as **DataSourceConfig.xml**. Also observe 
+**SqlToAdoNetApi.Dal.Test** project now has valid reverences to 
+**SqlToAdoNetApi.Dal.ApiEvaluateDB** and **SqlToAdoNetApi.DbApi.Test** projects. 
 
 Run unit tests in **SqlToAdoNetApi.Dal.Test**. It should produce result similar
 to one below:
